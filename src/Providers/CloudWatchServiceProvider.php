@@ -42,8 +42,8 @@ class CloudWatchServiceProvider extends ServiceProvider
 
     public function getLogger()
     {
-        $cwClient = new CloudWatchLogsClient($this->getCredentials());
         $loggingConfig = $this->app->make('config')->get('logging.channels.cloudwatch');
+        $cwClient = new CloudWatchLogsClient($this->getCredentials($loggingConfig));
 
         $streamName = $loggingConfig['stream_name'];
         $retentionDays = $loggingConfig['retention'];
@@ -100,9 +100,8 @@ class CloudWatchServiceProvider extends ServiceProvider
      *
      * @throws \Pagevamp\Exceptions\IncompleteCloudWatchConfig
      */
-    protected function getCredentials()
+    public function getCredentials(array $loggingConfig)
     {
-        $loggingConfig = $this->app->make('config')->get('logging.channels');
 
         if (!isset($loggingConfig['cloudwatch'])) {
             throw new IncompleteCloudWatchConfig('Configuration Missing for Cloudwatch Log');
@@ -119,7 +118,7 @@ class CloudWatchServiceProvider extends ServiceProvider
             'version' => $cloudWatchConfigs['version'],
         ];
         
-        if($cloudWatchConfigs['credentials']['key'])) {
+        if($cloudWatchConfigs['credentials']['key']) {
             $awsCredentials['credentials'] = $cloudWatchConfigs['credentials'];
         }
         

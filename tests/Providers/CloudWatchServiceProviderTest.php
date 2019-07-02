@@ -4,6 +4,7 @@ namespace Tests\Providers;
 
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Config;
 use Monolog\Formatter\JsonFormatter;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Formatter\LogglyFormatter;
@@ -257,5 +258,27 @@ class CloudWatchServiceProviderTest extends TestCase
         $this->expectException(IncompleteCloudWatchConfig::class);
         $provider = new CloudWatchServiceProvider($app);
         $provider->getLogger();
+    }
+
+    public function testIfExceptionAreThrownProperlyForIncorrectData()
+    {
+        $cloudwatchConfigs = [
+            'name' => '',
+            'region' => '',
+            'credentials' => [
+                'key' => '',
+                'secret' => '',
+            ],
+            'stream_name' => 'laravel_app',
+            'retention' => 14,
+            'group_name' => 'laravel_app',
+            'version' => 'latest',
+            'formatter' => 'InvalidFormatter',
+        ];
+        $app = Mockery::mock(Application::class);
+        $provider = new CloudWatchServiceProvider($app);
+//
+        $this->expectException(IncompleteCloudWatchConfig::class);
+        $provider->getCredentials($cloudwatchConfigs);
     }
 }
