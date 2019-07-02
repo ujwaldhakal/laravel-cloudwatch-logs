@@ -239,12 +239,6 @@ class CloudWatchServiceProviderTest extends TestCase
         $config = Mockery::mock(Repository::class);
         $config->shouldReceive('get')
             ->once()
-            ->with('logging.channels')
-            ->andReturn([
-                'cloudwatch' => $cloudwatchConfigs,
-            ]);
-        $config->shouldReceive('get')
-            ->once()
             ->with('logging.channels.cloudwatch')
             ->andReturn($cloudwatchConfigs);
 

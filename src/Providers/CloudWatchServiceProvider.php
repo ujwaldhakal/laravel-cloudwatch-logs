@@ -30,7 +30,7 @@ class CloudWatchServiceProvider extends ServiceProvider
                 }
 
                 if ($message instanceof \ErrorException) {
-                    return $this->getLogger()->log($level, $message, $context);
+                    return $this->getLogger($this->app->make('config')->get('logging.channels.cloudwatch'))->log($level, $message, $context);
                 }
 
                 if ($app['cloudwatch.logger'] instanceof Logger) {
@@ -40,10 +40,9 @@ class CloudWatchServiceProvider extends ServiceProvider
         }
     }
 
-    public function getLogger()
+    public function getLogger($loggingConfig)
     {
         $cwClient = new CloudWatchLogsClient($this->getCredentials());
-        $loggingConfig = $this->app->make('config')->get('logging.channels.cloudwatch');
 
         $streamName = $loggingConfig['stream_name'];
         $retentionDays = $loggingConfig['retention'];
@@ -119,7 +118,7 @@ class CloudWatchServiceProvider extends ServiceProvider
             'version' => $cloudWatchConfigs['version'],
         ];
         
-        if($cloudWatchConfigs['credentials']['key'])) {
+        if($cloudWatchConfigs['credentials']['key']) {
             $awsCredentials['credentials'] = $cloudWatchConfigs['credentials'];
         }
         
