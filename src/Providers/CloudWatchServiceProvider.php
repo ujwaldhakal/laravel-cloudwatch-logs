@@ -11,10 +11,13 @@ use Pagevamp\Exceptions\IncompleteCloudWatchConfig;
 
 class CloudWatchServiceProvider extends ServiceProvider
 {
+    protected $loggingConfig;
+
     public function boot()
     {
         if (!env('DISABLE_CLOUDWATCH_LOG')) {
             $app = $this->app;
+            $this->loggingConfig = $this->app->make('config')->get('logging.channels.cloudwatch');
             $app['log']->listen(function () use ($app) {
                 $args = \func_get_args();
 
@@ -30,7 +33,7 @@ class CloudWatchServiceProvider extends ServiceProvider
                 }
 
                 if ($message instanceof \ErrorException) {
-                    return $this->getLogger($this->app->make('config')->get('logging.channels.cloudwatch'))->log($level, $message, $context);
+                    return $this->getLogger()->log($level, $message, $context);
                 }
 
                 if ($app['cloudwatch.logger'] instanceof Logger) {
@@ -40,19 +43,20 @@ class CloudWatchServiceProvider extends ServiceProvider
         }
     }
 
-    public function getLogger($loggingConfig)
+    public function getLogger()
     {
         $cwClient = new CloudWatchLogsClient($this->getCredentials());
+        $this->loggingConfig = $this->app->make('config')->get('logging.channels.cloudwatch');
 
-        $streamName = $loggingConfig['stream_name'];
-        $retentionDays = $loggingConfig['retention'];
-        $groupName = $loggingConfig['group_name'];
-        $batchSize = isset($loggingConfig['batch_size']) ? $loggingConfig['batch_size'] : 10000;
+        $streamName = $this->loggingConfig['stream_name'];
+        $retentionDays = $this->loggingConfig['retention'];
+        $groupName = $this->loggingConfig['group_name'];
+        $batchSize = isset($this->loggingConfig['batch_size']) ? $this->loggingConfig['batch_size'] : 10000;
 
         $logHandler = new CloudWatch($cwClient, $groupName, $streamName, $retentionDays, $batchSize);
-        $logger = new Logger($loggingConfig['name']);
+        $logger = new Logger($this->loggingConfig['name']);
 
-        $formatter = $this->resolveFormatter($loggingConfig);
+        $formatter = $this->resolveFormatter($this->loggingConfig);
         $logHandler->setFormatter($formatter);
         $logger->pushHandler($logHandler);
 
@@ -117,8 +121,8 @@ class CloudWatchServiceProvider extends ServiceProvider
             'region' => $cloudWatchConfigs['region'],
             'version' => $cloudWatchConfigs['version'],
         ];
-        
-        if($cloudWatchConfigs['credentials']['key']) {
+
+        if($cloudWatchConfigs['credentials']['key'])) {
             $awsCredentials['credentials'] = $cloudWatchConfigs['credentials'];
         }
         
